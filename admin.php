@@ -86,6 +86,8 @@
             <div class="project-form" id="editFormSection">
                 <h2>Tambah/Edit Data</h2>
                 <form id="projectForm" action="menambahdata.php" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" id="id_uas" name="id_uas" /> <!-- Hidden field for id_uas -->
+
                     <label for="judul">Judul:</label>
                     <input type="text" id="judul" name="judul" required />
 
@@ -100,7 +102,7 @@
                         $result_enum = $conn->query($sql_enum);
                         $row_enum = $result_enum->fetch_assoc();
 
-                        // Ambil nilai ENUM dan tampilkan sebagai pilihan dropdown
+                        // Extract ENUM values and display as dropdown options
                         $enum_values = explode("','", preg_replace("/(enum|set)\('(.+?)'\)/", "\\2", $row_enum['Type']));
                         foreach ($enum_values as $value) {
                             echo "<option value='$value'>$value</option>";
@@ -117,6 +119,8 @@
                     <label for="image">Gambar:</label>
                     <input type="file" id="image" name="images" accept="image/*" />
 
+
+
                     <button type="submit" name="submit">Simpan Data</button>
                 </form>
             </div>
@@ -127,34 +131,28 @@
         function populateForm(event, editButton) {
             event.preventDefault();
 
+            // Get data attributes and populate the form
             const id_uas = editButton.getAttribute("data-id_uas");
-            const judul = editButton.getAttribute("data-judul");
-            const isi = editButton.getAttribute("data-isi");
-            const kategori = editButton.getAttribute("data-kategori");
-            const author = editButton.getAttribute("data-author");
-            const tanggal = editButton.getAttribute("data-tanggal");
+            document.getElementById("id_uas").value = id_uas; // Set the id for editing
+            document.getElementById("judul").value = editButton.getAttribute("data-judul");
+            document.getElementById("isi").value = editButton.getAttribute("data-isi");
+            document.getElementById("kategori").value = editButton.getAttribute("data-kategori");
+            document.getElementById("author").value = editButton.getAttribute("data-author");
+            document.getElementById("tanggal").value = editButton.getAttribute("data-tanggal");
+
             const images = editButton.getAttribute("data-images");
-
-            document.getElementById("judul").value = judul;
-            document.getElementById("isi").value = isi;
-            document.getElementById("kategori").value = kategori;
-            document.getElementById("author").value = author;
-            document.getElementById("tanggal").value = tanggal;
-
-            const fileInput = document.getElementById("image");
-            const existingPreview = document.querySelector("#editFormSection .profile-preview");
-
-            if (existingPreview) existingPreview.remove();
+            const imagePreview = document.getElementById("image-preview");
+            imagePreview.innerHTML = ""; // Clear previous preview if any
 
             if (images) {
-                const profilePreview = document.createElement("img");
-                profilePreview.src = `../php/uploads1/${images}`;
-                profilePreview.alt = "Gambar";
-                profilePreview.classList.add("profile-preview");
-
-                fileInput.insertAdjacentElement("afterend", profilePreview);
+                const img = document.createElement("img");
+                img.src = `./${images}`;
+                img.alt = "Gambar";
+                img.classList.add("profile-preview");
+                imagePreview.appendChild(img);
             }
 
+            // Scroll to the form for editing
             document.getElementById("editFormSection").scrollIntoView({
                 behavior: "smooth",
                 block: "start"
