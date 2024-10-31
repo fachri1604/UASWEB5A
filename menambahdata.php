@@ -2,70 +2,55 @@
 include 'koneksi.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Mengambil data dari form
+    // Retrieve data from the form
     $judul = $_POST['judul'];
     $isi = $_POST['isi'];
     $kategori = $_POST['kategori'];
     $author = $_POST['author'];
     $tanggal_posting = $_POST['tanggal_posting'];
 
-    // Cek apakah author sudah ada di tabel biodata_author (misalnya untuk memvalidasi author terdaftar)
-    $cek_author = "SELECT * FROM biodata_author WHERE author_name = '$author'";
-    $result = $conn->query($cek_author);
+    // File upload setup
+    $target_dir = "uploads/";
+    $target_file = $target_dir . basename($_FILES["images"]["name"]);
+    $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
 
-    if ($result->num_rows > 0) {
-        // Cek apakah kombinasi judul dan kategori sudah ada di tabel uas
-        $cek_uas = "SELECT * FROM uas WHERE judul = '$judul' AND kategori = '$kategori'";
-        $result_uas = $conn->query($cek_uas);
+    // Validate that the uploaded file is an image
+    $check = getimagesize($_FILES["images"]["tmp_name"]);
+    if ($check === false) {
+        echo "File is not an image.";
+        exit;
+    }
 
-        if ($result_uas->num_rows == 0) {
-            // Proses upload gambar
-            $target_dir = "uploads/";
-            $target_file = $target_dir . basename($_FILES["images"]["name"]);
-            $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+    // File size validation
+    if ($_FILES["images"]["size"] > 2000000) {
+        echo "File size is too large.";
+        exit;
+    }
 
-            // Cek apakah file benar-benar gambar
-            $check = getimagesize($_FILES["images"]["tmp_name"]);
-            if ($check === false) {
-                echo "File bukan gambar.";
-                exit;
-            }
+    // Allow specific file formats
+    if (!in_array($imageFileType, ["jpg", "png", "jpeg", "gif"])) {
+        echo "Only JPG, JPEG, PNG & GIF files are allowed.";
+        exit;
+    }
 
-            // Cek ukuran file
-            if ($_FILES["images"]["size"] > 2000000) {
-                echo "Ukuran file terlalu besar.";
-                exit;
-            }
+    // Move uploaded file to target directory
+    if (move_uploaded_file($_FILES["images"]["tmp_name"], $target_file)) {
+        $images = $target_file;
 
-            // Cek format gambar
-            if ($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg" && $imageFileType != "gif") {
-                echo "Hanya JPG, JPEG, PNG & GIF yang diperbolehkan.";
-                exit;
-            }
+        // SQL query to insert data into `uas` table
+        $sql = "INSERT INTO uas (judul, isi, kategori, author, tanggal_posting, images) 
+                VALUES ('$judul', '$isi', '$kategori', '$author', '$tanggal_posting', '$images')";
 
-            // Pindahkan file yang diupload ke folder
-            if (move_uploaded_file($_FILES["images"]["tmp_name"], $target_file)) {
-                $images = $target_file;
-
-                // Query untuk menyimpan data ke tabel uas
-                $sql = "INSERT INTO uas (judul, isi, kategori, author, tanggal_posting, images) 
-                        VALUES ('$judul', '$isi', '$kategori', '$author', '$tanggal_posting', '$images')";
-
-                if ($conn->query($sql) === TRUE) {
-                    echo "Data berhasil ditambahkan.";
-                } else {
-                    echo "Error: " . $sql . "<br>" . $conn->error;
-                }
-            } else {
-                echo "Terjadi kesalahan saat mengupload file.";
-            }
+        if ($conn->query($sql) === TRUE) {
+            // Redirect to admin.php after successful insertion
+            header("Location: admin.php");
+            exit; // Ensure no further code is executed after redirection
         } else {
-            echo "Data dengan judul dan kategori yang sama sudah ada.";
+            echo "Error: " . $sql . "<br>" . $conn->error;
         }
     } else {
-        echo "Author tidak ditemukan di biodata_author. Silakan masukkan author yang sudah terdaftar.";
+        echo "There was an error uploading the file.";
     }
 }
 
-// Tutup koneksi
 $conn->close();

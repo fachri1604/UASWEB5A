@@ -13,10 +13,9 @@
 <body>
     <nav>
         <span class="logo_name">Blog</span>
-        </div>
         <div class="menu-items">
             <ul class="nav-links">
-                <li><a href="admin_page.php"><i class="uil uil-estate"></i><span class="link-name">Karya</span></a></li>
+                <li><a href="index.html"><i class="uil uil-estate"></i><span class="link-name">Karya</span></a></li>
             </ul>
         </div>
     </nav>
@@ -54,8 +53,8 @@
                 <td>" . $row["kategori"] . "</td>
                 <td>" . $row["author"] . "</td>
                 <td>" . $row["tanggal_posting"] . "</td>
-                <td><img src='../php/uploads1/" . $row["images"] . "' alt='Gambar' class='profile-img'></td>
-                <td>
+                <td><img src='./" . $row["images"] . "' alt='Gambar' class='profile-img'></td>
+                <td>    
                   <div class='button-group'>
                     <a href='#' class='edit-btn' 
                        data-id_uas='" . $row["id_uas"] . "' 
@@ -68,7 +67,7 @@
                        onclick='populateForm(event, this)'>
                       <i class='uil uil-edit'></i>
                     </a>
-                    <a href='../php/hapus.php?id_uas=" . $row["id_uas"] . "' class='delete-btn' onclick='return confirm(\"Apakah Anda yakin ingin menghapus data ini?\")'>
+                    <a href='hapus.php?id_uas=" . $row["id_uas"] . "' class='delete-btn' onclick='return confirm(\"Apakah Anda yakin ingin menghapus data ini?\")'>
                       <i class='uil uil-trash-alt'></i>
                     </a>
                   </div>
@@ -86,7 +85,7 @@
             <!-- Form untuk tambah/edit data -->
             <div class="project-form" id="editFormSection">
                 <h2>Tambah/Edit Data</h2>
-                <form id="projectForm" action="../php/tambah.php" method="POST" enctype="multipart/form-data">
+                <form id="projectForm" action="menambahdata.php" method="POST" enctype="multipart/form-data">
                     <label for="judul">Judul:</label>
                     <input type="text" id="judul" name="judul" required />
 
@@ -94,7 +93,20 @@
                     <textarea id="isi" name="isi" required></textarea>
 
                     <label for="kategori">Kategori:</label>
-                    <input type="text" id="kategori" name="kategori" required />
+                    <select id="kategori" name="kategori" required>
+                        <?php
+                        include 'koneksi.php';
+                        $sql_enum = "SHOW COLUMNS FROM uas LIKE 'kategori'";
+                        $result_enum = $conn->query($sql_enum);
+                        $row_enum = $result_enum->fetch_assoc();
+
+                        // Ambil nilai ENUM dan tampilkan sebagai pilihan dropdown
+                        $enum_values = explode("','", preg_replace("/(enum|set)\('(.+?)'\)/", "\\2", $row_enum['Type']));
+                        foreach ($enum_values as $value) {
+                            echo "<option value='$value'>$value</option>";
+                        }
+                        ?>
+                    </select>
 
                     <label for="author">Author:</label>
                     <input type="text" id="author" name="author" required />
